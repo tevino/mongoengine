@@ -1319,3 +1319,35 @@ class UUIDField(BaseField):
                 value = uuid.UUID(value)
             except Exception, exc:
                 self.error('Could not convert to UUID: %s' % exc)
+
+
+class CalculatedField(BaseField):
+    """
+    A read-only field which will automatically calculate value on access (lazily).
+
+    Example:
+
+    .. code-block:: python
+
+        class Foo(Document):
+            begin_time = FloatField()
+            end_time = FloatField()
+            duration = CalculatedField('_do_subtract')
+            _do_subtract(self):
+                return self.end_time - self.begin_time
+    """
+
+    def __init__(self, method_name, **kwargs):
+        self.method_name = method_name
+        super(CalculatedField, self).__init__(**kwargs)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            # Document class being used rather than a document object
+            return self
+
+        # Get the method from document instance by given name
+        method = getattr(instance, self.method_name)
+        if not callable(method):
+            raise Exception('%s is not callable.' % self.method_name)
+        return method()
