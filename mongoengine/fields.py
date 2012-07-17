@@ -1351,3 +1351,6 @@ class CalculatedField(BaseField):
         if not callable(method):
             raise Exception('%s is not callable.' % self.method_name)
         return method()
+
+    def to_mongo(self, value):
+        return None
